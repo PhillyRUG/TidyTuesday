@@ -1,0 +1,53 @@
+# Tidy Tuesday Session 1
+## 2/15/22
+
+### Importing the data
+
+```{r import, echo=F}
+library(ggplot2)
+library(dplyr)
+```
+
+To load data from GitHub into R, navigate to the directory/repo containing the data, select the data's .csv file, and press 'raw'. Copying this url into a call to readr::read_csv will return the data for us:
+
+```{r import_data, echo=F}
+web_chal7_dat <- readr::read_csv('https://raw.githubusercontent.com/ajstarks/dubois-data-portraits/master/challenge/2022/challenge07/data.csv') 
+
+
+web_chal7_dat <- web_chal7_dat %>% 
+  tidyr::pivot_longer(!c('Gender','Group'),
+                      names_to='marital_status',
+                      values_to='percent') 
+
+web_chal7_dat$marital_status <- factor(web_chal7_dat$marital_status, levels=c('Widowed','Married','Single'))
+
+p1 <- ggplot({web_chal7_dat %>% dplyr::filter(Gender=='Female') %>% dplyr::arrange(marital_status)}, aes(x=percent,y=Group, fill=marital_status)) + geom_bar(stat='identity',position='fill',width=1) + theme_minimal() + scale_fill_manual(values = c("Single" = "#245f8d", "Married" = "#e43557", 'Widowed' = '#53a47b'))+
+  theme(legend.position="none",
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.margin=unit(c(1,1,1,-0.5), "cm"),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) + 
+  xlab('Female') + ylab('')+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+
+p2 <- ggplot({web_chal7_dat %>% dplyr::filter(Gender=='Male') %>% dplyr::arrange(marital_status)}, aes(x=percent,y=Group, fill=marital_status)) + geom_bar(stat='identity',position='fill',width=1) + theme_minimal() + scale_fill_manual(values = c("Single" = "#245f8d", "Married" = "#e43557", 'Widowed' = '#53a47b'))  + xlab('Male') +
+  theme(legend.position="none",
+        axis.ticks.y = element_blank(),
+        plot.margin=unit(c(1,-1,1,1), "cm"),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) + ylab('') +
+  scale_x_reverse(breaks = c(0.25,0.5,0.75,1), 
+                  labels = scales::percent_format(accuracy = 1))
+
+gridExtra::grid.arrange(p2,p1,nrow=1)
+
+#web_chal7_dat
+```
+## A section
+
+All chapter sections start with a second-level (`##`) or higher heading followed by your section title, like the sections above and below here. You can have as many as you want within a chapter.
+
+### An unnumbered section {-}
+
+Chapters and sections are numbered by default. To un-number a heading, add a `{.unnumbered}` or the shorter `{-}` at the end of the heading, like in this section.
