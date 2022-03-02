@@ -1,12 +1,50 @@
-# Parts
 
-You can add parts to organize one or more book chapters together. Parts can be inserted at the top of an .Rmd file, before the first-level chapter heading in that same file. 
+### Week 3: 
 
-Add a numbered part: `# (PART) Act one {-}` (followed by `# A chapter`)
+```{r setup}
+library(dplyr)
+library(ggplot2)
+library(maps)
+stations <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-01/stations.csv')
+```
 
-Add an unnumbered part: `# (PART\*) Act one {-}` (followed by `# A chapter`)
-
-Add an appendix as a special kind of un-numbered part: `# (APPENDIX) Other stuff {-}` (followed by `# A chapter`). Chapters in an appendix are prepended with letters instead of numbers.
 
 
+```{r eda}
+skimr::skim(stations)
 
+states <- map_data("state") %>% dplyr::select(group, region) %>% distinct -> states
+stations %>%
+  dplyr::mutate(FuelType = case_when(
+   FUEL_TYPE_CODE=='BD' ~ 'Biodiesel (B20 and above)',
+   FUEL_TYPE_CODE=='CNG' ~ 'Compressed Natural Gas (CNG)',
+   FUEL_TYPE_CODE=='ELEC' ~ 'Electric',
+   FUEL_TYPE_CODE=='E85' ~ 'Ethanol (E85)',
+   FUEL_TYPE_CODE=='HY' ~ 'Hydrogen',
+   FUEL_TYPE_CODE=='LNG' ~ 'Liquefied Natural Gas (LNG)',
+   FUEL_TYPE_CODE=='LPG' ~ 'Propane (LPG)'
+  )) %>% 
+  dplyr::mutate(StateName = tolower(state.name[match(stations$STATE,state.abb)])) %>%
+  dplyr::inner_join(states, by = c('StateName'='region')) -> choro
+
+# https://stackoverflow.com/questions/31216951/how-do-i-change-the-projection-method-used-by-r-for-mapping-coordinates
+# this is a helpful way to see the different projection options for structuring a map
+# it also shows how coord_map is used, something that was confusing on our call.
+
+choro %>% 
+  dplyr::select(group, LONGITUDE, LATITUDE, FuelType) %>%
+  dplyr::group_by(group, LONGITUDE, LATITUDE, FuelType) %>%
+  dplyr::count() -> CHORO
+names(CHORO)
+
+ggplot(CHORO, aes(LONGITUDE, LATITUDE)) +
+  geom_polygon(aes(group = group, fill = n))  +
+  coord_map("gilbert")
+
+ggplot() + 
+  geom_sf(data = choro) + 
+  geom_sf(data = choro, colour = "black", fill = NA) + 
+  geom_point(data = choro, mapping = aes(x = LONGITUDE, y = LATITIDE, color = FuelType)) + 
+  coord_sf()
+   
+```

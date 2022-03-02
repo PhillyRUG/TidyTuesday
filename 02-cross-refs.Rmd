@@ -1,34 +1,46 @@
-# Cross-references {#cross}
+### Tidy Tuesday Week 2
 
-Cross-references make it easier for your readers to find and link to elements in your book.
-
-## Chapters and sub-chapters
-
-There are two steps to cross-reference any heading:
-
-1. Label the heading: `# Hello world {#nice-label}`. 
-    - Leave the label off if you like the automated heading generated based on your heading title: for example, `# Hello world` = `# Hello world {#hello-world}`.
-    - To label an un-numbered heading, use: `# Hello world {-#nice-label}` or `{# Hello world .unnumbered}`.
-
-1. Next, reference the labeled heading anywhere in the text using `\@ref(nice-label)`; for example, please see Chapter \@ref(cross). 
-    - If you prefer text as the link instead of a numbered reference use: [any text you want can go here](#cross).
-
-## Captioned figures and tables
-
-Figures and tables *with captions* can also be cross-referenced from elsewhere in your book using `\@ref(fig:chunk-label)` and `\@ref(tab:chunk-label)`, respectively.
-
-See Figure \@ref(fig:nice-fig).
-
-```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center', fig.alt='Plot with connected points showing that vapor pressure of mercury increases exponentially as temperature increases.'}
-par(mar = c(4, 4, .1, .1))
-plot(pressure, type = 'b', pch = 19)
+```{r packages} 
+library('ggplot2')
+library('dplyr')
 ```
 
-Don't miss Table \@ref(tab:nice-tab).
 
-```{r nice-tab, tidy=FALSE}
-knitr::kable(
-  head(pressure, 10), caption = 'Here is a nice table!',
-  booktabs = TRUE
-)
+```{r import_data}
+
+freedom <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-02-22/freedom.csv')
+
+skimr::skim(freedom)
+
+freedom %>% dplyr::summarize(Min_PR = min(PR),
+                             Max_PR = max(PR),
+                             mean_PR = mean(PR))
+
+americas_df <- freedom %>% dplyr::filter(Region_Name=='Americas')
+americas_df %>% group_by(year, country) %>% count(country) %>% dplyr::filter(n>1)
+
+plotly::ggplotly({americas_df %>% group_by(country) %>% dplyr::summarize(PR=mean(PR), CL = mean(CL)) %>%
+  ggplot(aes(x=CL,y=PR, color=country)) + geom_point() + 
+    theme(legend.position = 'none')})
+
+avg_df <- freedom %>%
+  group_by(year) %>%
+  summarize(avg_CL = mean(CL),
+            avg_PR = mean(PR))
+
+usa_df <- freedom %>% dplyr::filter(country == 'United States of America') %>%
+  dplyr::full_join(avg_df,by = c('year'='year')) %>%
+  dplyr::group_by(year) %>%
+  dplyr::mutate(rat_PR = PR/avg_PR,
+                rat_CL = CL/avg_CL,
+                rat_Index = 1-(PR + CL)/(avg_PR+avg_CL),
+                sum_vars = CL + PR,
+                freedom_score = 0.5*(100-(PR - 1)*100/6) + 0.5*(100-(CL - 1)*100/6))
+
+usa_df %>% 
+  dplyr::filter(year >= 2008, year <= 2017) %>% 
+  dplyr::mutate(FreedomIndex = freedom_score) %>%
+  ggplot(aes(x=year,y=FreedomIndex)) + geom_line()
+                      
+
 ```
