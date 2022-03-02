@@ -3,13 +3,12 @@
 
 ### Importing the data
 
-This week, the PhillyR
-
 ```{r import, echo=F}
 library(ggplot2)
 library(dplyr)
 ```
 
+To load data from GitHub into R, navigate to the directory/repo containing the data, select the data's .csv file, and press 'raw'. Copying this url into a call to readr::read_csv will return the data for us:
 
 ```{r import_data, echo=F}
 web_chal7_dat <- readr::read_csv('https://raw.githubusercontent.com/ajstarks/dubois-data-portraits/master/challenge/2022/challenge07/data.csv') 
