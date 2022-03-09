@@ -25,26 +25,15 @@ stations %>%
    FUEL_TYPE_CODE=='LPG' ~ 'Propane (LPG)'
   )) %>% 
   dplyr::mutate(StateName = tolower(state.name[match(stations$STATE,state.abb)])) %>%
-  dplyr::inner_join(states, by = c('StateName'='region')) -> choro
+  dplyr::inner_join(states, by = c('StateName'='region')) -> total
 
 # https://stackoverflow.com/questions/31216951/how-do-i-change-the-projection-method-used-by-r-for-mapping-coordinates
 # this is a helpful way to see the different projection options for structuring a map
 # it also shows how coord_map is used, something that was confusing on our call.
 
-choro %>% 
-  dplyr::select(group, LONGITUDE, LATITUDE, FuelType) %>%
-  dplyr::group_by(group, LONGITUDE, LATITUDE, FuelType) %>%
-  dplyr::count() -> CHORO
-names(CHORO)
+total %>%
+  group_by(StateName, EV_DC_FAST_COUNT) %>%
+  summarize(n = n())
 
-ggplot(CHORO, aes(LONGITUDE, LATITUDE)) +
-  geom_polygon(aes(group = group, fill = n))  +
-  coord_map("gilbert")
 
-ggplot() + 
-  geom_sf(data = choro) + 
-  geom_sf(data = choro, colour = "black", fill = NA) + 
-  geom_point(data = choro, mapping = aes(x = LONGITUDE, y = LATITIDE, color = FuelType)) + 
-  coord_sf()
-   
 ```
